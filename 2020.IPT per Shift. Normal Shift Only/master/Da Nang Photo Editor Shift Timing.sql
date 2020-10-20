@@ -7,10 +7,11 @@
 **************************
 ** Change History
 **************************
-** PR   Date        Author  Description
-** --   --------   -------   ------------------------------------
-** 1    2019-09-15 An Pham      Create for RJmetric
-** 2 	2020-02-27	Thu			Update Have_Meal 
+** PR   Date	        Author		Description
+** --   --------	-------		------------------------------------
+** 1    2019-09-15	An Pham		Create for RJmetric
+** 2 	2020-02-27	Thu		Update Have_Meal 
+** 3	2020-10-20	Linh		
 *******************************************************************************************/
 with _ as (
     select
@@ -273,6 +274,9 @@ FROM timing
                              and NormalShift.WorkerID = timing.WorkerID
                              and datediff(minute, NormalShift.shift_start, NormalShift.min_) < 1*60
                              and datediff(minute, NormalShift.shift_start, NormalShift.max_) > 7*60
-WHERE filter_worker.PEGroupID in (4)
+WHERE
+			filter_worker.PEGroupID 	in (4)
+		and 	ActivityType.MappedTypeID 	in (7117) -- linhnd: Filter Activity Type Here
+	      
 ORDER BY date_ desc, timing.shiftID desc, team.TeamName, filter_worker.WorkerID, isNormalShift desc,  ActivityType.TypeName
 limit 10000 offset 0

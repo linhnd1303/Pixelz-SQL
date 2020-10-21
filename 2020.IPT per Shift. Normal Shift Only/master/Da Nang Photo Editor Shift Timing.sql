@@ -1,5 +1,5 @@
 /******************************************************************************************
-** Name: IPT Shift timing (PS table)
+** Name: IPT Shift timing (PE table) Normal Shift Detected last 3 month
 ** Desc: Ha Noi, Da Nang
 ** Auth: An Pham
 ** Onwer: Mr.Vu Production
@@ -17,7 +17,7 @@ with _ as (
     select
 --            dateadd(hour, -7, '2019-07-28 06:15:00') as start_,
 --            dateadd(hour, -7, '2019-09-01 06:15:00') as end_,
-           dateadd(month, -1, date_) as start_,
+           dateadd(month, -3, date_) as start_,    -- linhnd: howw many month have last here
            dateadd(month,  1, date_) as end_,
            7*60 - mins_ as shifted_
     from (select dateadd(hour, -7, dateadd(minute, mins_, dateadd(day, 25, date_trunc('month',
@@ -80,10 +80,10 @@ with _ as (
       UNION ALL SELECT 9    , 'f_WaitForDownloading'
       UNION ALL SELECT 8    , 'g_SystemErrorTime'
       UNION ALL SELECT 1091 , 'l_HaveMeal'
-  	  UNION ALL SELECT 1093 , 'l_ref_HaveMeal'
+      UNION ALL SELECT 1093 , 'l_ref_HaveMeal'
       UNION ALL SELECT 1092 , 'l_Logout'
       UNION ALL SELECT 7116 , '1__IPTAndPostProcessing'
-        UNION ALL SELECT 7117 , '1__IPTAndPostProcessingWorkOnBrowser'
+      UNION ALL SELECT 7117 , '1__IPTAndPostProcessingWorkOnBrowser'
 
 ), ActivityLog AS (
     SELECT
@@ -110,7 +110,7 @@ with _ as (
         	  OR lower(ApplicationName) LIKE '%stemain.exe%'
         		OR lower(ApplicationName) IN ('stemain', 'ste', 'ste launcher')
         	  OR lower(ApplicationName) LIKE '%smooth_path%' 
-                															   )) THEN 1001 ELSE --'WorkingTool'
+                								   )) THEN 1001 ELSE --'WorkingTool'
 
       CASE WHEN ActivityTimeTypeID!= 12 AND ((UPPER(ApplicationName) LIKE '%SKYPE%')) THEN 514 ELSE --'Skype'
 

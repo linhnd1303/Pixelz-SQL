@@ -29,7 +29,7 @@ WITH Global_Imgs AS (
       iss.WorkingServicePriceInMiliseconds * 0.001                            AS ExpectedIPT_secs
     FROM ImageSawStep iss
   	INNER JOIN ProductionWorkers pw ON iss.ProductionWorkerID = pw.WorkerID
-    WHERE dateadd(hour, 7, AssignDate) >= date_trunc('Month', getdate()) - INTERVAL '24 Months'
+    WHERE dateadd(hour, 7, AssignDate) >= date_trunc('Month', getdate()) - INTERVAL '12 Months'
           AND iss.WorkingServicePriceInMiliseconds > 0
           AND "Worker Name" NOT LIKE 'Freel%'
           AND "Worker Name" NOT LIKE 'Auto%'
@@ -125,7 +125,7 @@ WITH Global_Imgs AS (
                                                             RIGHT('00' + CAST(DATEPART(mm, RejectedDatetime) AS varchar(2)), 2)
                                     AND gi.ProductionWorkerID = srl.ReceiverWorkerID
                                    )
-WHERE RejectedDatetime >= date_trunc('Month', getdate()) - INTERVAL '24 Months'
+WHERE RejectedDatetime >= date_trunc('Month', getdate()) - INTERVAL '12 Months'
 AND isnull(IsCustomerRejected, 0) = 0
 )
 

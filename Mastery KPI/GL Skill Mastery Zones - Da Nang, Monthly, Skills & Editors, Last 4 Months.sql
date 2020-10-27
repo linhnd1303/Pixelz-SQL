@@ -45,6 +45,7 @@ WITH Global_Imgs AS (
             8,   --Garments 1
             74,  --Garments 2
             75,  --Garments 3
+            521, --New Garment ,
             128, --Combination
             120, --New Path
             70,  --Stencil Manual
@@ -214,7 +215,7 @@ WHERE rejImageID IS NULL
 WHERE img_count >=				
 			CASE	
 				WHEN SawSkillID IN (15,439,426) THEN 15
-				WHEN SawSkillID IN (6,11,47,434) THEN 50
+				WHEN SawSkillID IN (6,11,47,434,521) THEN 50   --add 521 New Garment 
 				WHEN SawSkillID IN (12,14,20,21,23,39,40,43,479,46,70,120,128,160,167,303,328,198,452,455,480,486) THEN 100
 				WHEN SawSkillID IN (13,5,10,16,44,121,133,304,461,135,458,484) THEN 200
 				WHEN SawSkillID IN (1,22,29,65,337,430,444) THEN 500

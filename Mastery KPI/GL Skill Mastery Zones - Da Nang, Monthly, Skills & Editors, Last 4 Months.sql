@@ -1,3 +1,19 @@
+/******************************************************************************************
+** Name: [Shan] DAD Mastery KPIs plus Expert in Level last many month
+** Desc:
+** Auth: Shan mod by Linhnd
+** Onwer: 
+** Created_at: 2019-08-03
+**************************
+** Change History
+**************************
+** PR	Date 		Author		Description
+** --	--------	-------		------------------------------------
+** 2	2020-10-26	linhnd		add step 521 new garment 
+** 1	2020-10-21	linhnd		Ceate for RJmetric
+*******************************************************************************************/
+
+
 WITH Global_Imgs AS (
     SELECT
       ImageID,

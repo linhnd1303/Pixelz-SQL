@@ -16,7 +16,7 @@ with _ as (
     select
 --            dateadd(hour, -7, '2019-07-28 06:15:00') as start_,
 --            dateadd(hour, -7, '2019-09-01 06:15:00') as end_,
-           dateadd(month, -1, date_) as start_,
+           dateadd(month, -3, date_) as start_,
            dateadd(month,  1, date_) as end_,
            7*60 - mins_ as shifted_
     from (select dateadd(hour, -7, dateadd(minute, mins_, dateadd(day, 25, date_trunc('month',

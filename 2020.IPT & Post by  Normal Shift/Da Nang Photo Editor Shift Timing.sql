@@ -253,7 +253,7 @@ SELECT
   ProductionWorkers.WorkerName,
   ProductionWorkers.WorkerID,
 --   ProductionWorkers.WorkerName + ' (' + cast(ProductionWorkers.WorkerID as nvarchar(5)) + ')' AS WorkerName,
---   ProductionWorkers.EmployeeCode,
+  ProductionWorkers.EmployeeCode,	--linhnd: add employee 
   isnull(NormalShift.isNormalShift, 0)                   AS isNormalShift,
   isnull(RegisterShift.isRegisterShift, 0)               AS isRegisterShift,
   ActivityType.TypeName                                  AS ActivityType,
@@ -274,5 +274,6 @@ FROM timing
                              and datediff(minute, NormalShift.shift_start, NormalShift.min_) < 1*60
                              and datediff(minute, NormalShift.shift_start, NormalShift.max_) > 7*60
 WHERE filter_worker.PEGroupID in (4)
+      and ActivityType.MappedTypeID in (7117) --linhnd: add filter by Acitivty 
 ORDER BY date_ desc, timing.shiftID desc, team.TeamName, filter_worker.WorkerID, isNormalShift desc,  ActivityType.TypeName
 limit 10000 offset 0

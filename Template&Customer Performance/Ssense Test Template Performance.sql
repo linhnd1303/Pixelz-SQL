@@ -17,8 +17,8 @@ SELECT --TOP 10000
     round(1.0*sum(iss.WorkingTimeInMilliseconds*0.001)/count(iss.ImageID),1) as avg_ipt,
     round(1.0*sum(iss.WorkingServicePriceInMiliseconds*0.001)/count(iss.ImageID),1) as avg_opt,
     ROUND(1.0*sum(iss.WorkingTimeInMilliseconds)/nullif(sum(iss.WorkingServicePriceInMiliseconds),0),2) AS efficiency_score,
-    round(sum(iss.WorkingTimeInMilliseconds*0.001)/3600,1) AS sum_ipt_hours,
-	round(sum(iss.WorkingServicePriceInMiliseconds*0.001)/3600,1) AS sum_opt_hours
+    round(sum(iss.WorkingTimeInMilliseconds*0.001),1) AS sum_ipt_hours,
+	round(sum(iss.WorkingServicePriceInMiliseconds*0.001),1) AS sum_opt_hours
 
 FROM ImageSawStep iss
 INNER JOIN ProductionWorkers ON  ProductionWorkers.WorkerID = iss.ProductionWorkerID

@@ -1,13 +1,13 @@
 
 SELECT --TOP 10000
-date(dateadd(hour,7,iss.AssignDate)) as Date_,
-dateadd(hour,7,iss.AssignDate) as date_time,
+    date(dateadd(hour,7,iss.AssignDate)) as Date_,
+    dateadd(hour,7,iss.AssignDate) as date_time,
     SawSkill.SawSkillName,
     ProductionWorkers.WorkerName,
 	ProductionWorkers.WorkerEmail,
 	ProductionWorkers.EmployeeCode,
 	ProductionWorkers.WorkerOfficeName,
-	iss.ImageID,
+	--iss.ImageID,
     t.TemplateName,
 	t.TemplateID,
     Contacts.ContactCompany,
@@ -22,26 +22,26 @@ dateadd(hour,7,iss.AssignDate) as date_time,
     round(sum(iss.WorkingTimeInMilliseconds*0.001),1) AS sum_ipt_hours,
 	round(sum(iss.WorkingServicePriceInMiliseconds*0.001),1) AS sum_opt_hours,
 
-  count(srl.ImageID) AS rej_count --added
+    count(srl.ImageID) AS rej_count --added
 
 FROM ImageSawStep iss
-INNER JOIN ProductionWorkers ON  ProductionWorkers.WorkerID = iss.ProductionWorkerID
-INNER JOIN SawSkill ON SawSkill.SawSkillID = iss.SawSkillID
-INNER JOIN Images ON Images.ImageID = iss.ImageID
-INNER JOIN Templates t ON t.TemplateName=iss."Template Name" AND iss.ContactID=t.ContactID AND t.TemplateDeleted <> 1
-INNER JOIN Contacts ON Contacts.ContactID=iss.ContactID
-INNER JOIN SawRejectionLog srl ON srl.SawSkillID = iss.SawSkillID  and srl.ImageID = iss.ImageID
+              INNER JOIN ProductionWorkers ON  ProductionWorkers.WorkerID = iss.ProductionWorkerID
+              INNER JOIN SawSkill ON SawSkill.SawSkillID = iss.SawSkillID
+              INNER JOIN Images ON Images.ImageID = iss.ImageID
+              INNER JOIN Templates t ON t.TemplateName=iss."Template Name" AND iss.ContactID=t.ContactID AND t.TemplateDeleted <> 1
+              INNER JOIN Contacts ON Contacts.ContactID=iss.ContactID
+              FULL OUTER JOIN SawRejectionLog srl ON srl.SawSkillID = iss.SawSkillID  and srl.ImageID = iss.ImageID
 
 WHERE
-dateadd(hour,7,iss.AssignDate) > date_trunc('Week', getdate()) - INTERVAL '24 Weeks'
-AND t.ContactID=1160192 -- Ssense Customer ID
---AND  t.TemplateName like 'Test template (SSENSE)%'  -- Ssense Test Template
---AND ImageSawStep.ImageID > 33100000 -- greater than ~June 2019
---AND ImageSawStep.SawSkillID = 10 -- Footwear
-AND SawSkill.SawSkillName NOT LIKE 'QA G%'
-AND ProductionWorkers.WorkerName NOT LIKE 'auto%'
-AND ReceiverWorkerID IS NOT NULL -- remove bypass rejections
-AND IsCustomerRejected IS NULL
+		dateadd(hour,7,iss.AssignDate) > date_trunc('Week', getdate()) - INTERVAL '24 Weeks'
+        AND t.ContactID=1160192 -- Ssense Customer ID
+              --AND  t.TemplateName like 'Test template (SSENSE)%'  -- Ssense Test Template
+              --AND ImageSawStep.ImageID > 33100000 -- greater than ~June 2019
+              --AND ImageSawStep.SawSkillID = 10 -- Footwear
+        AND SawSkill.SawSkillName NOT LIKE 'QA G%'
+        AND ProductionWorkers.WorkerName NOT LIKE 'auto%'
+        AND ReceiverWorkerID IS NOT NULL -- remove bypass rejections
+        AND IsCustomerRejected IS NULL
 
 
 GROUP BY
@@ -52,7 +52,7 @@ ProductionWorkers.WorkerName,
 ProductionWorkers.WorkerEmail,
 ProductionWorkers.EmployeeCode,
 ProductionWorkers.WorkerOfficeName,
-	iss.ImageID,
+	--iss.ImageID,
 t.TemplateName,
 t.TemplateID,
 Contacts.ContactCompany,

@@ -42,7 +42,7 @@ WHERE
         AND ProductionWorkers.WorkerName NOT LIKE 'auto%'
       --  AND ReceiverWorkerID IS NOT NULL -- remove bypass rejections
        -- AND IsCustomerRejected IS NULL
-
+		AND SawSkill.SawSkillName LIKE 'Ssense'   --lnd: added filter
 
 GROUP BY
 Date_,

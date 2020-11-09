@@ -40,8 +40,8 @@ WHERE
               --AND ImageSawStep.SawSkillID = 10 -- Footwear
         AND SawSkill.SawSkillName NOT LIKE 'QA G%'
         AND ProductionWorkers.WorkerName NOT LIKE 'auto%'
-        AND ReceiverWorkerID IS NOT NULL -- remove bypass rejections
-        AND IsCustomerRejected IS NULL
+      --  AND ReceiverWorkerID IS NOT NULL -- remove bypass rejections
+       -- AND IsCustomerRejected IS NULL
 
 
 GROUP BY

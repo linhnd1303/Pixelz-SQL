@@ -1,5 +1,6 @@
 
 SELECT --TOP 10000
+date(iss.AssignDate),
 iss.AssignDate,
     SawSkill.SawSkillName,
     ProductionWorkers.WorkerName,
@@ -21,6 +22,9 @@ iss.AssignDate,
     round(sum(iss.WorkingTimeInMilliseconds*0.001),1) AS sum_ipt_hours,
 	round(sum(iss.WorkingServicePriceInMiliseconds*0.001),1) AS sum_opt_hours
 
+
+
+
 FROM ImageSawStep iss
 INNER JOIN ProductionWorkers ON  ProductionWorkers.WorkerID = iss.ProductionWorkerID
 INNER JOIN SawSkill ON SawSkill.SawSkillID = iss.SawSkillID
@@ -38,6 +42,7 @@ AND SawSkill.SawSkillName NOT LIKE 'QA G%'
 AND ProductionWorkers.WorkerName NOT LIKE 'auto%'
 
 GROUP BY
+date(iss.AssignDate),
 iss.AssignDate,
 SawSkill.SawSkillName,
 ProductionWorkers.WorkerName,
@@ -53,5 +58,5 @@ iss.SawSkillID,
 GlobalSortOrder
 
 
-ORDER BY GlobalSortOrder 
-LIMIT 10000 OFFSET 0 
+ORDER BY date(iss.AssignDate) desc
+LIMIT 10000 OFFSET 0

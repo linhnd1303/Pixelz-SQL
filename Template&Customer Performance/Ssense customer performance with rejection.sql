@@ -1,7 +1,7 @@
 
 SELECT --TOP 10000
-dateadd(hour,7,iss.AssignDate) as date_,
-iss.AssignDate,
+date(dateadd(hour,7,iss.AssignDate)) as Date_,
+dateadd(hour,7,iss.AssignDate) as date_time,
     SawSkill.SawSkillName,
     ProductionWorkers.WorkerName,
 	ProductionWorkers.WorkerEmail,
@@ -45,8 +45,8 @@ AND IsCustomerRejected IS NULL
 
 
 GROUP BY
-date_,
-iss.AssignDate,
+Date_,
+date_time,
 SawSkill.SawSkillName,
 ProductionWorkers.WorkerName,
 ProductionWorkers.WorkerEmail,

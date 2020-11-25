@@ -17,7 +17,7 @@ with _ as (
     select
 --            dateadd(hour, -7, '2019-07-28 06:15:00') as start_,
 --            dateadd(hour, -7, '2019-09-01 06:15:00') as end_,
-           dateadd(month, -2, date_) as start_,
+           dateadd(month, -12, date_) as start_,
            dateadd(month,  1, date_) as end_,
            7*60 - mins_ as shifted_
     from (select dateadd(hour, -7, dateadd(minute, mins_, dateadd(day, 25, date_trunc('month',
@@ -274,6 +274,6 @@ SELECT
 FROM ps_table as timing
   LEFT JOIN ActivityType ON ActivityType.MappedTypeID = timing.MappedTypeID
   LEFT JOIN PEGroup ON PEGroup.PEGroupID = timing.PEGroupID
-WHERE PEGroup.PEGroupID in (2, 4)
+WHERE PEGroup.PEGroupID in (4)  --lnd: 2 HN & 4 
 ORDER BY time_frame desc, timing.shiftID desc, PEGroup.PEGroupName, isNormalShift desc, ActivityType.TypeName
 LIMIT 10000 OFFSET 0

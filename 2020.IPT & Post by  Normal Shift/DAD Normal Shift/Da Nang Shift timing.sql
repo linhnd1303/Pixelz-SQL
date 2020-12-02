@@ -266,7 +266,7 @@ with _ as (
 )
 SELECT
   time_frame                                             as date_,
-  substring('1_AM2_PM3_NI', (timing.shiftID) * 4 + 1, 4) AS shift_,
+  substring('1_AM2_PM3_NS', (timing.shiftID) * 4 + 1, 4) AS shift_,
   PEGroup.PEGroupName                                    AS Office,
   isNormalShift,
   number_editor,

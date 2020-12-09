@@ -9,11 +9,10 @@
 **************************
 ** PR	Date 		Author		Description
 ** --	--------	-------		------------------------------------
+** 3	2020-12-09	linhnd		Restructure for 2021 + add expert + New mastery concept num expert x 130%
 ** 2	2020-10-26	linhnd		add step 521 new garment 
 ** 1	2020-10-21	linhnd		Ceate for RJmetric
 *******************************************************************************************/
-
-
 
 WITH Global_Imgs AS (
     SELECT
@@ -30,7 +29,7 @@ WITH Global_Imgs AS (
       iss.WorkingServicePriceInMiliseconds * 0.001                            AS ExpectedIPT_secs
     FROM ImageSawStep iss
   	INNER JOIN ProductionWorkers pw ON iss.ProductionWorkerID = pw.WorkerID
-    WHERE dateadd(hour, 7, AssignDate) >= date_trunc('Month', getdate()) - INTERVAL '12 Months'
+    WHERE dateadd(hour, 7, AssignDate) >= date_trunc('Month', getdate()) - INTERVAL '1 Months'
           AND iss.WorkingServicePriceInMiliseconds > 0
           AND "Worker Name" NOT LIKE 'Freel%'
           AND "Worker Name" NOT LIKE 'Auto%'
@@ -62,7 +61,7 @@ WITH Global_Imgs AS (
             8,   --Garments 1
             74,  --Garments 2
             75,  --Garments 3
-			521, --New Garment 
+            521, --New Garment Retouch
             128, --Combination
             120, --New Path
             70,  --Stencil Manual
@@ -108,7 +107,9 @@ WITH Global_Imgs AS (
             486, --RL REC 2
             426, --IHS Other
             438, --Nike
+            537, --Ssense
             439  --Fossil
+            
     )
 )
 
@@ -127,7 +128,7 @@ WITH Global_Imgs AS (
                                                             RIGHT('00' + CAST(DATEPART(mm, RejectedDatetime) AS varchar(2)), 2)
                                     AND gi.ProductionWorkerID = srl.ReceiverWorkerID
                                    )
-WHERE RejectedDatetime >= date_trunc('Month', getdate()) - INTERVAL '12 Months'
+WHERE RejectedDatetime >= date_trunc('Month', getdate()) - INTERVAL '1 Months'
 AND isnull(IsCustomerRejected, 0) = 0
 )
 
@@ -232,7 +233,7 @@ WHERE rejImageID IS NULL
 WHERE img_count >=				
 			CASE	
 				WHEN SawSkillID IN (15,439,426) THEN 15
-				WHEN SawSkillID IN (6,11,47,434,521) THEN 50  --add 521 New Garment 
+				WHEN SawSkillID IN (6,11,47,434,521) THEN 50   --521, --New Garment Retouch
 				WHEN SawSkillID IN (12,14,20,21,23,39,40,43,479,46,70,120,128,160,167,303,328,198,452,455,480,486) THEN 100
 				WHEN SawSkillID IN (13,5,10,16,44,121,133,304,461,135,458,484) THEN 200
 				WHEN SawSkillID IN (1,22,29,65,337,430,444) THEN 500
@@ -263,10 +264,10 @@ WHERE img_count >=
       a.SawSkillID,
       NumRankOfExperts,
 
-      round(avg(CASE WHEN rank_ipt_to_opt <= NumRankOfExperts
-        THEN efficiency_on_sums END) + 0.3, 2) AS SkillMasteryZone_UpperBound,
-		
-	round(avg(CASE WHEN rank_ipt_to_opt <= NumRankOfExperts
+      round(avg(CASE WHEN rank_ipt_to_opt = NumRankOfExperts
+        THEN efficiency_on_sums END) * 1.3, 2) AS SkillMasteryZone_UpperBound,
+
+      round(avg(CASE WHEN rank_ipt_to_opt = NumRankOfExperts
         THEN efficiency_on_sums END) , 2) AS SkillExpertZone_UpperBound
 
     FROM Editor_Ranks a
@@ -298,11 +299,10 @@ WHERE img_count >=
       eru.rej_rate,
       eru.efficiency_on_sums AS efficiency_score,
       smz.SkillMasteryZone_UpperBound,
-	  smz.SkillExpertZone_UpperBound,
   eru.efficiency_on_sums -	smz.SkillMasteryZone_UpperBound  AS Distance_from_mastery,
-      CASE 
-			WHEN efficiency_on_sums<=SkillExpertZone_UpperBound THEN 'Expert'
-		--	WHEN efficiency_on_sums<=SkillMasteryZone_UpperBound THEN 'Master'
+      CASE
+      	   WHEN efficiency_on_sums<=SkillExpertZone_UpperBound THEN 'Expert'
+      	   --WHEN efficiency_on_sums<=SkillMasteryZone_UpperBound THEN 'Master'
 		   WHEN (efficiency_on_sums>SkillExpertZone_UpperBound AND efficiency_on_sums<=(SkillMasteryZone_UpperBound)) THEN 'Master'
   	  	   WHEN (efficiency_on_sums>SkillMasteryZone_UpperBound AND efficiency_on_sums<=(SkillMasteryZone_UpperBound+0.2)) THEN 'Premaster'
    		   WHEN efficiency_on_sums>(SkillMasteryZone_UpperBound+0.2) THEN 'Bottom'
@@ -318,7 +318,8 @@ WHERE img_count >=
 
 
 SELECT * --TOP 10000 * 
-FROM editor_ranks_with_smz 
+FROM editor_ranks_with_smz
 WHERE WorkerOfficeName LIKE 'D%'
-ORDER BY "Worker Name", SawSkillID, Month_, global_efficiency_rank 
+ORDER BY "Worker Name", SawSkillID, Month_, global_efficiency_rank
+
 LIMIT 10000 OFFSET 0

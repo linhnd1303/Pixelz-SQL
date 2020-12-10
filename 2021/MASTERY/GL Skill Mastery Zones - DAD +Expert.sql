@@ -194,7 +194,7 @@ WHERE rejImageID IS NULL
       round(sum(ExpectedIPT_secs), 2)                       AS sum_ExpectedIPT_secs,
       rej_counts_per_worker.rej_img_count,
       round(1.0 * rej_img_count / (rej_img_count + count(filtered_imgs.ImageID)),4) AS rej_rate,
-      round(1.0 * sum(IPT_secs) / nullif(sum(ExpectedIPT_secs), 0), 2) AS efficiency_on_sums
+      round(1.0 * sum(IPT_secs) / nullif(sum(ExpectedIPT_secs), 0), 4) AS efficiency_on_sums
       
     FROM filtered_imgs
    	INNER JOIN rej_counts_per_worker ON (rej_counts_per_worker.Month_=filtered_imgs.Month_ 

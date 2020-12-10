@@ -9,6 +9,7 @@
 **************************
 ** PR	Date 		Author		Description
 ** --	--------	-------		------------------------------------
+** *	*			*			Doing: Add include rejection + remove 5% top and bot outlier
 ** 3	2020-12-09	linhnd		Restructure for 2021 + add expert + New mastery concept num expert x 130%
 ** 2	2020-10-26	linhnd		add step 521 new garment 
 ** 1	2020-10-21	linhnd		Ceate for RJmetric
@@ -193,7 +194,7 @@ WHERE rejImageID IS NULL
       round(sum(ExpectedIPT_secs), 2)                       AS sum_ExpectedIPT_secs,
       rej_counts_per_worker.rej_img_count,
       round(1.0 * rej_img_count / (rej_img_count + count(filtered_imgs.ImageID)),4) AS rej_rate,
-      round(1.0 * sum(IPT_secs) / nullif(sum(ExpectedIPT_secs), 0), 5) AS efficiency_on_sums
+      round(1.0 * sum(IPT_secs) / nullif(sum(ExpectedIPT_secs), 0), 2) AS efficiency_on_sums
       
     FROM filtered_imgs
    	INNER JOIN rej_counts_per_worker ON (rej_counts_per_worker.Month_=filtered_imgs.Month_ 
@@ -299,7 +300,9 @@ WHERE img_count >=
       eru.rej_rate,
       eru.efficiency_on_sums AS efficiency_score,
       smz.SkillMasteryZone_UpperBound,
-  eru.efficiency_on_sums -	smz.SkillMasteryZone_UpperBound  AS Distance_from_mastery,
+      smz.SkillExpertZone_UpperBound,
+      nroeps.NumRankOfExperts,
+  	  eru.efficiency_on_sums -	smz.SkillMasteryZone_UpperBound  AS Distance_from_mastery,
       CASE
       	   WHEN efficiency_on_sums<=SkillExpertZone_UpperBound THEN 'Expert'
       	   --WHEN efficiency_on_sums<=SkillMasteryZone_UpperBound THEN 'Master'
@@ -311,7 +314,9 @@ WHERE img_count >=
       eru.rank_ipt_to_opt AS global_efficiency_rank
     FROM Editor_Ranks_unfiltered eru 
     INNER JOIN SMZ_UpperBounds smz ON (smz.Month_=eru.Month_ 
-                                               AND smz.SawSkillID=eru.SawSkillID)
+                               AND smz.SawSkillID=eru.SawSkillID)
+    INNER JOIN NumRankOfExpertsPerSkill nroeps ON (nroeps.Month_=eru.Month_ 
+                               AND nroeps.SawSkillID=eru.SawSkillID)       
 ) -- Returns unique Month and WorkerID
 
 

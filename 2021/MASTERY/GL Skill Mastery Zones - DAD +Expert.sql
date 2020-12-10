@@ -10,6 +10,7 @@
 ** PR	Date 		Author		Description
 ** --	--------	-------		------------------------------------
 ** *	*			*			Doing: Add include rejection + remove 5% top and bot outlier
+** 4	2020-12-10	linhnd		add 1.5 for premaster amd bottom
 ** 3	2020-12-09	linhnd		Restructure for 2021 + add expert + New mastery concept num expert x 130%
 ** 2	2020-10-26	linhnd		add step 521 new garment 
 ** 1	2020-10-21	linhnd		Ceate for RJmetric
@@ -307,8 +308,8 @@ WHERE img_count >=
       	   WHEN efficiency_on_sums<=SkillExpertZone_UpperBound THEN 'Expert'
       	   --WHEN efficiency_on_sums<=SkillMasteryZone_UpperBound THEN 'Master'
 		   WHEN (efficiency_on_sums>SkillExpertZone_UpperBound AND efficiency_on_sums<=(SkillMasteryZone_UpperBound)) THEN 'Master'
-  	  	   WHEN (efficiency_on_sums>SkillMasteryZone_UpperBound AND efficiency_on_sums<=(SkillMasteryZone_UpperBound+0.2)) THEN 'Premaster'
-   		   WHEN efficiency_on_sums>(SkillMasteryZone_UpperBound+0.2) THEN 'Bottom'
+  	  	   WHEN (efficiency_on_sums>SkillMasteryZone_UpperBound AND efficiency_on_sums<=(SkillExpertZone_UpperBound * 1.5)) THEN 'Premaster'
+   		   WHEN efficiency_on_sums>(SkillExpertZone_UpperBound * 1.5) THEN 'Bottom'
   		ELSE NULL
   	  END AS Mastery_Level,
       eru.rank_ipt_to_opt AS global_efficiency_rank

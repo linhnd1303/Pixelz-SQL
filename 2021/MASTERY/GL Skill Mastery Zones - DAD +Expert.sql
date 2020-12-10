@@ -324,7 +324,7 @@ WHERE img_count >=
 
 SELECT * --TOP 10000 * 
 FROM editor_ranks_with_smz
-WHERE WorkerOfficeName LIKE 'D%'
+-- WHERE WorkerOfficeName LIKE 'D%'   -- lnd: Filter Location
 ORDER BY "Worker Name", SawSkillID, Month_, global_efficiency_rank
 
 LIMIT 10000 OFFSET 0

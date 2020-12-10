@@ -267,10 +267,10 @@ WHERE img_count >=
       NumRankOfExperts,
 
       round(avg(CASE WHEN rank_ipt_to_opt = NumRankOfExperts
-        THEN efficiency_on_sums END) * 1.3, 2) AS SkillMasteryZone_UpperBound,
+        THEN efficiency_on_sums END) * 1.3, 4) AS SkillMasteryZone_UpperBound,
 
       round(avg(CASE WHEN rank_ipt_to_opt = NumRankOfExperts
-        THEN efficiency_on_sums END) , 2) AS SkillExpertZone_UpperBound
+        THEN efficiency_on_sums END) , 4) AS SkillExpertZone_UpperBound
 
     FROM Editor_Ranks a
       INNER JOIN NumRankOfExpertsPerSkill nroeps ON (nroeps.Month_ = a.Month_ AND nroeps.SawSkillID = a.SawSkillID)

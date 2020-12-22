@@ -1,5 +1,5 @@
 /******************************************************************************************
-** Name: DAD Mastery KPIs plus Expert in Level last many month
+** Name: DAD Mastery KPIs plus Expert in Level last many Week
 ** Desc:
 ** Auth: Shan mod by Linhnd
 ** Onwer: 
@@ -207,7 +207,7 @@ WHERE rejImageID IS NULL
       SawSkillName,
       filtered_imgs.SawSkillID,
       rej_img_count
-) -- Returns unique month and workerID and SkillID
+) -- Returns unique Week and workerID and SkillID
 
 
 , Editor_Ranks_unfiltered AS (
@@ -217,7 +217,7 @@ WHERE rejImageID IS NULL
       OVER ( PARTITION BY SawSkillID, Week_
         ORDER BY efficiency_on_sums ASC ) AS rank_ipt_to_opt
     FROM Worker_Stats
-) -- Returns unique Month and WorkerID
+) -- Returns unique Week and WorkerID
 
 , Editor_Ranks AS (
     SELECT
@@ -236,7 +236,7 @@ WHERE img_count >=
 				WHEN SawSkillID IN (1,22,29,65,337,430,444) THEN 125
 				ELSE 50
 			END	
-) -- Returns unique Month and WorkerID
+) -- Returns unique Week and WorkerID
 
 , NumRankOfExpertsPerSkill AS (
     SELECT
@@ -251,7 +251,7 @@ WHERE img_count >=
       Week_,
       SawSkillName,
       SawSkillID
-) -- Returns unique Month and WorkerID
+) -- Returns unique Week and WorkerID
 
 , SMZ_UpperBounds AS (
     SELECT
@@ -278,7 +278,7 @@ WHERE img_count >=
 
 , editor_ranks_with_smz AS (
     SELECT
-      eru.Month_,
+      eru.Week_,
       eru.SawSkillName,
       eru.SawSkillID,
       eru.WorkerID,
@@ -307,9 +307,9 @@ WHERE img_count >=
   	  END AS Mastery_Level,
       eru.rank_ipt_to_opt AS global_efficiency_rank
     FROM Editor_Ranks_unfiltered eru 
-    INNER JOIN SMZ_UpperBounds smz ON (smz.Month_=eru.Month_ 
+    INNER JOIN SMZ_UpperBounds smz ON (smz.Week_=eru.Week_ 
                                AND smz.SawSkillID=eru.SawSkillID)
-    INNER JOIN NumRankOfExpertsPerSkill nroeps ON (nroeps.Month_=eru.Month_ 
+    INNER JOIN NumRankOfExpertsPerSkill nroeps ON (nroeps.Week_=eru.Week_ 
                                AND nroeps.SawSkillID=eru.SawSkillID)   
 )
 
@@ -317,6 +317,6 @@ WHERE img_count >=
 SELECT * --TOP 10000 * 
 FROM editor_ranks_with_smz
 -- WHERE WorkerOfficeName LIKE 'D%'   -- lnd: Filter Location
-ORDER BY "Worker Name", SawSkillID, Month_, global_efficiency_rank
+ORDER BY "Worker Name", SawSkillID, Week_, global_efficiency_rank
 
 LIMIT 10000 OFFSET 0

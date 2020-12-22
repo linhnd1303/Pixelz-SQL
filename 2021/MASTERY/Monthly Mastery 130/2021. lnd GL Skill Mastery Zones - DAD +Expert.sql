@@ -1,20 +1,37 @@
- 
+/******************************************************************************************
+** Name: DAD Mastery KPIs plus Expert in Level last many month
+** Desc:
+** Auth: Shan mod by Linhnd
+** Onwer: 
+** Created_at: 2019-08-03
+**************************
+** Change History
+**************************
+** PR	Date 		Author		Description
+** --	--------	-------		------------------------------------
+** *	*			*			Doing: Add include rejection + remove 5% top and bot outlier
+** 4	2020-12-10	linhnd		add 1.5 for premaster amd bottom
+** 3	2020-12-09	linhnd		Restructure for 2021 + add expert + New mastery concept num expert x 130%
+** 2	2020-10-26	linhnd		add step 521 new garment 
+** 1	2020-10-21	linhnd		Ceate for RJmetric
+*******************************************************************************************/
+
 WITH Global_Imgs AS (
     SELECT
       ImageID,
       ProductionWorkerID,
       "Worker Name",
-      JoinedDate,
       pw.WorkerOfficeName,
+      JoinedDate,
       SawSkillName,
       SawSkillID,
       dateadd(hour, 7, AssignDate) AS AssignDate_UTC7,
-      to_char(dateadd(hour, 7, AssignDate), 'IYYY') + '-W' + to_char(dateadd(hour, 7, AssignDate), 'IW') 	as Week_,
+      to_char(dateadd(hour, 7, AssignDate), 'YYYY') + '-' + RIGHT('00' + CAST(DATEPART(mm, AssignDate) AS varchar(2)), 2) 	as Month_,
       iss.WorkingTimeInSeconds                                                AS IPT_secs,
       iss.WorkingServicePriceInMiliseconds * 0.001                            AS ExpectedIPT_secs
     FROM ImageSawStep iss
-  	INNER JOIN ProductionWorkers pw ON pw.WorkerID = iss.ProductionWorkerID
-    WHERE dateadd(hour, 7, AssignDate) >= date_trunc('Week', getdate()) - INTERVAL '8 Weeks'
+  	INNER JOIN ProductionWorkers pw ON iss.ProductionWorkerID = pw.WorkerID
+    WHERE dateadd(hour, 7, AssignDate) >= date_trunc('Month', getdate()) - INTERVAL '1 Months'
           AND iss.WorkingServicePriceInMiliseconds > 0
           AND "Worker Name" NOT LIKE 'Freel%'
           AND "Worker Name" NOT LIKE 'Auto%'
@@ -46,6 +63,7 @@ WITH Global_Imgs AS (
             8,   --Garments 1
             74,  --Garments 2
             75,  --Garments 3
+            521, --New Garment Retouch
             128, --Combination
             120, --New Path
             70,  --Stencil Manual
@@ -91,8 +109,11 @@ WITH Global_Imgs AS (
             486, --RL REC 2
             426, --IHS Other
             438, --Nike
+            537, --Ssense
             439  --Fossil
-    ))
+            
+    )
+)
 
 , rej_img_ids AS (
 
@@ -100,23 +121,40 @@ WITH Global_Imgs AS (
       srl.ImageID,
       srl.SawSkillID,
   	  srl.ReceiverWorkerID,
-      gi.Week_,
+      gi.Month_,
       gi.WorkerOfficeName
 
     FROM SawRejectionLog srl
       INNER JOIN Global_Imgs gi ON (gi.SawSkillID = srl.SawSkillID AND gi.ImageID = srl.ImageID
-                                     AND gi.Week_ = to_char(dateadd(hour, 7, RejectedDatetime), 'IYYY') + '-W' +
-                                                            to_char(dateadd(hour, 7, RejectedDatetime), 'IW')
+                                     AND gi.Month_ = to_char(dateadd(hour, 7, RejectedDatetime), 'YYYY') + '-' + 
+                                                            RIGHT('00' + CAST(DATEPART(mm, RejectedDatetime) AS varchar(2)), 2)
                                     AND gi.ProductionWorkerID = srl.ReceiverWorkerID
                                    )
-WHERE RejectedDatetime >= date_trunc('Week', getdate()) - INTERVAL '8 weeks'
-          AND isnull(IsCustomerRejected, 0) = 0
+WHERE RejectedDatetime >= date_trunc('Month', getdate()) - INTERVAL '1 Months'
+AND isnull(IsCustomerRejected, 0) = 0
 )
+
+, rej_counts_per_worker AS (
+  SELECT 
+    Month_,
+    ReceiverWorkerID,
+    SawSkillID,
+    WorkerOfficeName,
+    count(ImageID) AS rej_img_count
+  FROM rej_img_ids
+  GROUP BY
+    Month_,
+    ReceiverWorkerID,
+    SawSkillID,
+    WorkerOfficeName
+  
+)
+--SELECT TOP 20 * FROM rej_counts_per_worker 
 
 , rej_img_by_skills AS (
 
     SELECT
-Week_,
+Month_,
 rii.SawSkillID,
 count (rii.ImageID) AS rej_img_count,
 count (CASE WHEN WorkerOfficeName = 'Da Nang Office' THEN rii.ImageID END) AS rej_img_count_DN,
@@ -125,23 +163,8 @@ count (CASE WHEN WorkerOfficeName = 'bZm Graphics' THEN rii.ImageID END) AS rej_
 count (CASE WHEN WorkerOfficeName = 'Cambodia Office' THEN rii.ImageID END) AS rej_img_count_DDD
 FROM rej_img_ids rii
     GROUP BY
-Week_,
+Month_,
 rii.SawSkillID
-)
-
-, rej_counts_per_worker AS (
-  SELECT 
-    Week_,
-    ReceiverWorkerID,
-    SawSkillID,
-    WorkerOfficeName,
-    count(ImageID) AS rej_img_count
-  FROM rej_img_ids
-  GROUP BY
-    Week_,
-    ReceiverWorkerID,
-    SawSkillID,
-    WorkerOfficeName
 )
 
 , filtered_imgs AS (
@@ -158,28 +181,29 @@ WHERE rejImageID IS NULL
  , Worker_Stats AS (
     SELECT
       --TOP 10000
-      filtered_imgs.Week_,
+      filtered_imgs.Month_,
       SawSkillName,
       filtered_imgs.SawSkillID,
       ProductionWorkerID                                    AS WorkerID,
       "Worker Name",
       JoinedDate,
       filtered_imgs.WorkerOfficeName,
-      round(avg(IPT_secs),2)                                         as avg_ipt,
-      round(avg(ExpectedIPT_secs),2)                                 as avg_ExpectedIPT,
-      count(ImageID)                                        AS img_count,
+      round(avg(IPT_secs),2)                                AS avg_ipt,
+      round(avg(ExpectedIPT_secs),2)                        AS avg_ExpectedIPT,
+      count(filtered_imgs.ImageID)                          AS img_count,
       round(sum(IPT_secs), 2)                               AS sum_IPT_secs,
       round(sum(ExpectedIPT_secs), 2)                       AS sum_ExpectedIPT_secs,
-      rej_img_count,
+      rej_counts_per_worker.rej_img_count,
       round(1.0 * rej_img_count / (rej_img_count + count(filtered_imgs.ImageID)),4) AS rej_rate,
-      round(1.0 * sum(IPT_secs) / nullif(sum(ExpectedIPT_secs), 0), 5) AS efficiency_on_sums
+      round(1.0 * sum(IPT_secs) / nullif(sum(ExpectedIPT_secs), 0), 4) AS efficiency_on_sums
+      
     FROM filtered_imgs
-    INNER JOIN rej_counts_per_worker ON (rej_counts_per_worker.Week_=filtered_imgs.Week_ 
+   	INNER JOIN rej_counts_per_worker ON (rej_counts_per_worker.Month_=filtered_imgs.Month_ 
                                AND rej_counts_per_worker.ReceiverWorkerID=filtered_imgs.ProductionWorkerID
                                AND rej_counts_per_worker.SawSkillID = filtered_imgs.SawSkillID
                               )
     GROUP BY
-      filtered_imgs.Week_,
+      filtered_imgs.Month_,
       ProductionWorkerID,
       "Worker Name",
       JoinedDate,
@@ -195,7 +219,7 @@ WHERE rejImageID IS NULL
     SELECT
       Worker_Stats.*,
       RANK()
-      OVER ( PARTITION BY SawSkillID, Week_
+      OVER ( PARTITION BY SawSkillID, Month_
         ORDER BY efficiency_on_sums ASC ) AS rank_ipt_to_opt
     FROM Worker_Stats
 ) -- Returns unique Month and WorkerID
@@ -204,17 +228,17 @@ WHERE rejImageID IS NULL
     SELECT
       Worker_Stats.*,
       RANK()
-      OVER ( PARTITION BY SawSkillID, Week_
+      OVER ( PARTITION BY SawSkillID, Month_
         ORDER BY efficiency_on_sums ASC ) AS rank_ipt_to_opt
     FROM Worker_Stats
-    -- Weekly Img Count Minimums				
+    -- Monthly Img Count Minimums				
 WHERE img_count >=				
 			CASE	
-				WHEN SawSkillID IN (15,439,426) THEN 5
-				WHEN SawSkillID IN (6,11,47,434) THEN 15
-				WHEN SawSkillID IN (12,14,20,21,23,39,40,43,46,70,120,128,160,167,303,328,198,452,455,480,486) THEN 25
-				WHEN SawSkillID IN (13,5,10,16,44,121,133,304,461,135,458,484) THEN 50
-				WHEN SawSkillID IN (1,22,29,65,337,430,444) THEN 125
+				WHEN SawSkillID IN (15,439,426) THEN 15
+				WHEN SawSkillID IN (6,11,47,434,521) THEN 50   --521, --New Garment Retouch
+				WHEN SawSkillID IN (12,14,20,21,23,39,40,43,479,46,70,120,128,160,167,303,328,198,452,455,480,486) THEN 100
+				WHEN SawSkillID IN (13,5,10,16,44,121,133,304,461,135,458,484) THEN 200
+				WHEN SawSkillID IN (1,22,29,65,337,430,444) THEN 500
 				ELSE 50
 			END	
 ) -- Returns unique Month and WorkerID
@@ -222,41 +246,46 @@ WHERE img_count >=
 , NumRankOfExpertsPerSkill AS (
     SELECT
       --TOP 9000
-      Week_,
+      Month_,
       SawSkillName,
       SawSkillID,
       SUM(img_count),
       CEILING(0.10 * count(rank_ipt_to_opt)) AS NumRankOfExperts
     FROM Editor_Ranks
     GROUP BY
-      Week_,
+      Month_,
       SawSkillName,
       SawSkillID
 ) -- Returns unique Month and WorkerID
 
-, SMZ_UpperBounds AS (
+  , SMZ_UpperBounds AS (
     SELECT
       --TOP 9000
-      a.Week_,
+      a.Month_,
       a.SawSkillName,
       a.SawSkillID,
       NumRankOfExperts,
 
-      round(avg(CASE WHEN rank_ipt_to_opt <= NumRankOfExperts
-        THEN efficiency_on_sums END) + 0.3, 2) AS SkillMasteryZone_UpperBound
+      round(avg(CASE WHEN rank_ipt_to_opt = NumRankOfExperts
+        THEN efficiency_on_sums END) * 1.3, 4) AS SkillMasteryZone_UpperBound,
+
+      round(avg(CASE WHEN rank_ipt_to_opt = NumRankOfExperts
+        THEN efficiency_on_sums END) , 4) AS SkillExpertZone_UpperBound
 
     FROM Editor_Ranks a
-      INNER JOIN NumRankOfExpertsPerSkill nroeps ON (nroeps.Week_ = a.Week_ AND nroeps.SawSkillID = a.SawSkillID)
+      INNER JOIN NumRankOfExpertsPerSkill nroeps ON (nroeps.Month_ = a.Month_ AND nroeps.SawSkillID = a.SawSkillID)
     GROUP BY
-      a.Week_,
+      a.Month_,
       a.SawSkillName,
       a.SawSkillID,
       NumRankOfExperts
 )
 
+
+
 , editor_ranks_with_smz AS (
     SELECT
-      eru.Week_,
+      eru.Month_,
       eru.SawSkillName,
       eru.SawSkillID,
       eru.WorkerID,
@@ -272,20 +301,31 @@ WHERE img_count >=
       eru.rej_rate,
       eru.efficiency_on_sums AS efficiency_score,
       smz.SkillMasteryZone_UpperBound,
-  eru.efficiency_on_sums -	smz.SkillMasteryZone_UpperBound  AS Distance_from_mastery,
-  	  CASE WHEN efficiency_on_sums<=SkillMasteryZone_UpperBound THEN 'Master'
-  	  	   WHEN (efficiency_on_sums>SkillMasteryZone_UpperBound AND efficiency_on_sums<=(SkillMasteryZone_UpperBound+0.2)) THEN 'Premaster'
-   		   WHEN efficiency_on_sums>(SkillMasteryZone_UpperBound+0.2) THEN 'Bottom'
+      smz.SkillExpertZone_UpperBound,
+      nroeps.NumRankOfExperts,
+  	  eru.efficiency_on_sums -	smz.SkillMasteryZone_UpperBound  AS Distance_from_mastery,
+      CASE
+      	   WHEN efficiency_on_sums<=SkillExpertZone_UpperBound THEN 'Expert'
+      	   --WHEN efficiency_on_sums<=SkillMasteryZone_UpperBound THEN 'Master'
+		   WHEN (efficiency_on_sums>SkillExpertZone_UpperBound AND efficiency_on_sums<=(SkillMasteryZone_UpperBound)) THEN 'Master'
+  	  	   WHEN (efficiency_on_sums>SkillMasteryZone_UpperBound AND efficiency_on_sums<=(SkillExpertZone_UpperBound * 1.5)) THEN 'Premaster'
+   		   WHEN efficiency_on_sums>(SkillExpertZone_UpperBound * 1.5) THEN 'Bottom'
   		ELSE NULL
   	  END AS Mastery_Level,
       eru.rank_ipt_to_opt AS global_efficiency_rank
     FROM Editor_Ranks_unfiltered eru 
-    INNER JOIN SMZ_UpperBounds smz ON (smz.Week_=eru.Week_ 
-                                               AND smz.SawSkillID=eru.SawSkillID)
-)
+    INNER JOIN SMZ_UpperBounds smz ON (smz.Month_=eru.Month_ 
+                               AND smz.SawSkillID=eru.SawSkillID)
+    INNER JOIN NumRankOfExpertsPerSkill nroeps ON (nroeps.Month_=eru.Month_ 
+                               AND nroeps.SawSkillID=eru.SawSkillID)       
+) -- Returns unique Month and WorkerID
 
 
-SELECT TOP 10000 * 
-FROM editor_ranks_with_smz 
-WHERE WorkerOfficeName LIKE 'D%'
-ORDER BY "Worker Name", SawSkillID, Week_--, rank_ipt_to_opt
+
+
+SELECT * --TOP 10000 * 
+FROM editor_ranks_with_smz
+-- WHERE WorkerOfficeName LIKE 'D%'   -- lnd: Filter Location
+ORDER BY "Worker Name", SawSkillID, Month_, global_efficiency_rank
+
+LIMIT 10000 OFFSET 0

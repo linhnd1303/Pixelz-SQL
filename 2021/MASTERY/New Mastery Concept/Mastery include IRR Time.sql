@@ -126,7 +126,6 @@ select
 	"WorkerName","WorkerOfficeName",
 	Image_count,
 	avg_IPT,
-  	avg_IPT,
   	avg_OPT,
   	Sum_IPT,
   	Sum_OPT,

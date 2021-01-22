@@ -32,7 +32,7 @@ with get_onlyone_worker as (
       WorkingServicePriceInMiliseconds * 0.001                                                      as OPT,
       (WorkingTimeInMilliseconds * 0.001) / (WorkingServicePriceInMiliseconds * 0.001)              as Efficiency_score,
       row_number()
-      over ( partition by get_onlyone_worker.SawSkillID,Month_
+      over ( partition by get_onlyone_worker.SawSkillID,Week_
         order by (WorkingTimeInMilliseconds * 0.001) / (WorkingServicePriceInMiliseconds * 0.001) ) as rank_byES
     from get_onlyone_worker
       inner join ImageSawStep on get_onlyone_worker.ImageID = ImageSawStep.ImageID
@@ -52,13 +52,13 @@ with get_onlyone_worker as (
 )
   , number_outlier as (
     select
-    Month_,
+    Week_,
     Sawskillname,
       sawskillID,
       round(0.05 * count(ImageID), 0) as number_outliers,
       count(ImageID)                     Image_count
     from img_allSkill
-    group by Month_,sawskillID,Sawskillname
+    group by Week_,sawskillID,Sawskillname
     
     -- Trả về số lượng outlier 5% của mỗi skill.
     
@@ -73,7 +73,7 @@ with get_onlyone_worker as (
 --         order by Efficiency_score, IPT ) as rank_byES_2
     from img_allSkill
       inner join number_outlier on img_allSkill.sawskillid = number_outlier.SawskillID
-   								   and img_allSkill.Month_ = number_outlier.Month_
+   								   and img_allSkill.Week_ = number_outlier.Week_
                                    and img_allSkill.rank_byES > number_outliers
                                    and img_allSkill.rank_byES < Image_count - number_outliers
                                    
@@ -82,28 +82,28 @@ with get_onlyone_worker as (
 )
 , PE_ES as (
    	 		select
-  				remmove_outliers.Month_,
+  				remmove_outliers.Week_,
       			remmove_outliers.SawSkillID,
   				remmove_outliers.Sawskillname,
      			workerID,
   				count(ImageID) Image_count,
   				avg(IPT) avg_IPT,
   				avg(OPT) avg_OPT,
-  				sum(IPT as Sum_IPT,
+  				sum(IPT) as Sum_IPT,
   				sum(OPT) as Sum_OPT,
       			(sum(IPT) / Sum(OPT)) as ES,
        			row_number()
-      			over ( partition by remmove_outliers.SawSkillID,remmove_outliers.Month_
+      			over ( partition by remmove_outliers.SawSkillID,remmove_outliers.Week_
         			order by (sum(IPT) / Sum(OPT)) ) as rank_PEbyES
     		from remmove_outliers
-    		group by remmove_outliers.Month_,remmove_outliers.SawSkillID, remmove_outliers.Sawskillname, workerID
+    		group by remmove_outliers.Week_,remmove_outliers.SawSkillID, remmove_outliers.Sawskillname, workerID
     
     -- Trả về Rank lại PE ES mới sau khi đã Remove Outlier
     
 )
 , skill_mastery as(
   select
-  Month_,
+  Week_,
   sawskillID,
   Sawskillname,
   count(workerID) as PE_count,
@@ -113,13 +113,13 @@ with get_onlyone_worker as (
   count(workerID)-(round(0.10*count(workerID),0) + round(0.10*count(workerID)*1.3,0) + round(0.10*count(workerID)*1.5,0)) number_Bottom   --linhnd: adjust
   from PE_ES
 --where sawskillid=10
-  group by Month_,sawskillID,Sawskillname
+  group by Week_,sawskillID,Sawskillname
   
   -- Trả về số lượng Expert,master,premaster,bottom từ bản PE ES đã remove outlier
   
   )
 select
-	skill_mastery.Month_,
+	skill_mastery.Week_,
 	skill_mastery.sawskillID,
  	skill_mastery.Sawskillname,
 	PE_ES.workerID,
@@ -139,11 +139,11 @@ select
             --PE_ES2.ES as Pre_mastery_zone
 
 from  PE_ES inner join skill_mastery on skill_mastery.sawskillID	=	PE_ES.sawskillID
-									and skill_mastery.Month_		=	PE_ES.Month_
+									and skill_mastery.Week_		=	PE_ES.Week_
 			inner join Productionworkers on Productionworkers.workerID	=	PE_ES.WorkerID
 										--and skill_mastery.sawskillID=10
 										--group by 1,2
 
-Order by skill_mastery.Month_
+Order by skill_mastery.Week_
 
 Limit 10000 offset 0

@@ -21,7 +21,7 @@ with get_onlyone_worker as (
 )
   , img_allSkill as (
     select
-      datepart(Week, AssignDate)                                                                   as Month_,
+      datepart(Week, AssignDate)                                                                   as Week_,
       AssignDate,
       get_onlyone_worker.workerID,
       ProductionWorkers.WorkerName,
@@ -81,19 +81,22 @@ with get_onlyone_worker as (
     
 )
 , PE_ES as (
-    select
-  remmove_outliers.Month_,
-      remmove_outliers.SawSkillID,
-  remmove_outliers.Sawskillname,
-      workerID,
-  count(ImageID) Image_count,
-  avg(IPT) avg_IPT,
-      (sum(IPT) / Sum(OPT)) as ES,
-       row_number()
-      over ( partition by remmove_outliers.SawSkillID,remmove_outliers.Month_
-        order by (sum(IPT) / Sum(OPT)) ) as rank_PEbyES
-    from remmove_outliers
-    group by remmove_outliers.Month_,remmove_outliers.SawSkillID, remmove_outliers.Sawskillname, workerID
+   	 		select
+  				remmove_outliers.Month_,
+      			remmove_outliers.SawSkillID,
+  				remmove_outliers.Sawskillname,
+     			workerID,
+  				count(ImageID) Image_count,
+  				avg(IPT) avg_IPT,
+  				avg(OPT) avg_OPT,
+  				sum(IPT as Sum_IPT,
+  				sum(OPT) as Sum_OPT,
+      			(sum(IPT) / Sum(OPT)) as ES,
+       			row_number()
+      			over ( partition by remmove_outliers.SawSkillID,remmove_outliers.Month_
+        			order by (sum(IPT) / Sum(OPT)) ) as rank_PEbyES
+    		from remmove_outliers
+    		group by remmove_outliers.Month_,remmove_outliers.SawSkillID, remmove_outliers.Sawskillname, workerID
     
     -- Trả về Rank lại PE ES mới sau khi đã Remove Outlier
     
@@ -116,26 +119,31 @@ with get_onlyone_worker as (
   
   )
 select
-skill_mastery.Month_,
-skill_mastery.sawskillID,
-  skill_mastery.Sawskillname,
-PE_ES.workerID,
-"WorkerName","WorkerOfficeName",
-Image_count,
-avg_IPT,
-ES,
-case    when PE_ES.rank_PEbyES<=number_Expert then 'Expert'
-        when PE_ES.rank_PEbyES>number_Expert and PE_ES.rank_PEbyES<=number_Master then 'Master'
-        when PE_ES.rank_PEbyES>number_Master and PE_ES.rank_PEbyES<=(number_Master+number_Pre_Master) then 'Pre-Master'
-        when PE_ES.rank_PEbyES>(number_Master+number_Pre_Master) then 'Bottom' end as matery_level
---sum(case when PE_ES.rank_PEbyES=number_Pre_Master then PE_ES.ES end) as Pre_mastery_zone
---PE_ES2.ES as Pre_mastery_zone
+	skill_mastery.Month_,
+	skill_mastery.sawskillID,
+ 	skill_mastery.Sawskillname,
+	PE_ES.workerID,
+	"WorkerName","WorkerOfficeName",
+	Image_count,
+	avg_IPT,
+  	avg_IPT,
+  	avg_OPT,
+  	Sum_IPT,
+  	Sum_OPT,
+	ES,
+	case    when PE_ES.rank_PEbyES<=number_Expert then 'Expert'
+        	when PE_ES.rank_PEbyES>number_Expert and PE_ES.rank_PEbyES<=number_Master then 'Master'
+        	when PE_ES.rank_PEbyES>number_Master and PE_ES.rank_PEbyES<=(number_Master+number_Pre_Master) then 'Pre-Master'
+       		when PE_ES.rank_PEbyES>(number_Master+number_Pre_Master) then 'Bottom' end as matery_level
+            --sum(case when PE_ES.rank_PEbyES=number_Pre_Master then PE_ES.ES end) as Pre_mastery_zone
+            --PE_ES2.ES as Pre_mastery_zone
 
-from  PE_ES inner join skill_mastery on skill_mastery.sawskillID=PE_ES.sawskillID
-and skill_mastery.Month_=PE_ES.Month_
+from  PE_ES inner join skill_mastery on skill_mastery.sawskillID	=	PE_ES.sawskillID
+									and skill_mastery.Month_		=	PE_ES.Month_
+			inner join Productionworkers on Productionworkers.workerID	=	PE_ES.WorkerID
+										--and skill_mastery.sawskillID=10
+										--group by 1,2
 
---and skill_mastery.sawskillID=10
-inner join Productionworkers on Productionworkers.workerID=PE_ES.WorkerID
---group by 1,2
 Order by skill_mastery.Month_
+
 Limit 10000 offset 0

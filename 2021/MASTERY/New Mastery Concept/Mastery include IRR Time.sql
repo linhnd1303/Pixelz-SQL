@@ -20,34 +20,34 @@ with get_onlyone_worker as (
     -- Lấy ID ảnh điều kiện 1 PE làm.
 )
   , img_allSkill as (
-    select
-      datepart(Week, AssignDate)                                                                   as Week_,
-      AssignDate,
-      get_onlyone_worker.workerID,
-      ProductionWorkers.WorkerName,
-      Sawskillname,
-      ImageSawStep.ImageID,
-      get_onlyone_worker.SawSkillID,
-      WorkingTimeInMilliseconds * 0.001                                                             as IPT,
-      WorkingServicePriceInMiliseconds * 0.001                                                      as OPT,
-      (WorkingTimeInMilliseconds * 0.001) / (WorkingServicePriceInMiliseconds * 0.001)              as Efficiency_score,
-      row_number()
-      over ( partition by get_onlyone_worker.SawSkillID,Week_
-        order by (WorkingTimeInMilliseconds * 0.001) / (WorkingServicePriceInMiliseconds * 0.001) ) as rank_byES
-    from get_onlyone_worker
-      inner join ImageSawStep on get_onlyone_worker.ImageID = ImageSawStep.ImageID
-                                 --         and ImageSawStepID>530000000--4019710
-                                 and get_onlyone_worker.SawSkillID = ImageSawStep.SawskillID
-                                 and get_onlyone_worker.workerID = ImageSawStep.ProductionWorkerID
-                                 and AssignDate > '2020-12-01'
-                                 and AssignDate < '2021-08-01'
-                                 and WorkingTimeInMilliseconds > 0
-                                 and WorkingServicePriceInMiliseconds > 0
-      inner join ProductionWorkers on get_onlyone_worker.workerID = ProductionWorkers.workerID
-    							 and ProductionWorkers.WorkerName not like '%bot%'
-    							 
-    -- Lấy Month, assgindate, Worker ID, Worker Name, Skill, ImageiD, IPT, OPT, ES, RankbyES
-    -- Lấy các thông tin từ bảng get_onlyone_worker
+            select
+              datepart(Week, AssignDate)                                                                   	as Week_,
+              AssignDate,
+              get_onlyone_worker.workerID,
+              ProductionWorkers.WorkerName,
+              Sawskillname,
+              ImageSawStep.ImageID,
+              get_onlyone_worker.SawSkillID,
+              WorkingTimeInMilliseconds * 0.001                                                             as IPT,
+              WorkingServicePriceInMiliseconds * 0.001                                                      as OPT,
+              (WorkingTimeInMilliseconds * 0.001) / (WorkingServicePriceInMiliseconds * 0.001)              as Efficiency_score,
+              row_number()
+              over ( partition by get_onlyone_worker.SawSkillID,Week_
+                    order by (WorkingTimeInMilliseconds * 0.001) / (WorkingServicePriceInMiliseconds * 0.001) ) as rank_byES
+            from get_onlyone_worker
+            					inner join ImageSawStep on get_onlyone_worker.ImageID = ImageSawStep.ImageID
+            									--      and ImageSawStepID>530000000--4019710
+                                                        and get_onlyone_worker.SawSkillID = ImageSawStep.SawskillID
+                                                        and get_onlyone_worker.workerID = ImageSawStep.ProductionWorkerID
+                                                        and AssignDate > '2020-12-01'
+                                                        and AssignDate < '2021-08-01'
+                                                        and WorkingTimeInMilliseconds > 0
+                                                        and WorkingServicePriceInMiliseconds > 0
+           						inner join ProductionWorkers on get_onlyone_worker.workerID = ProductionWorkers.workerID
+            												and ProductionWorkers.WorkerName not like '%bot%'
+
+            -- Lấy Month, assgindate, Worker ID, Worker Name, Skill, ImageiD, IPT, OPT, ES, RankbyES
+            -- Lấy các thông tin từ bảng get_onlyone_worker
     
 )
   , number_outlier as (
@@ -134,12 +134,13 @@ select
 	case    when PE_ES.rank_PEbyES<=number_Expert then 'Expert'
         	when PE_ES.rank_PEbyES>number_Expert and PE_ES.rank_PEbyES<=number_Master then 'Master'
         	when PE_ES.rank_PEbyES>number_Master and PE_ES.rank_PEbyES<=(number_Master+number_Pre_Master) then 'Pre-Master'
-       		when PE_ES.rank_PEbyES>(number_Master+number_Pre_Master) then 'Bottom' end as matery_level
+       		when PE_ES.rank_PEbyES>(number_Master+number_Pre_Master) then 'Bottom' end as matery_level,
             --sum(case when PE_ES.rank_PEbyES=number_Pre_Master then PE_ES.ES end) as Pre_mastery_zone
             --PE_ES2.ES as Pre_mastery_zone
+	PE_ES.rank_PEbyES
 
 from  PE_ES inner join skill_mastery on skill_mastery.sawskillID	=	PE_ES.sawskillID
-									and skill_mastery.Week_		=	PE_ES.Week_
+									and skill_mastery.Week_			=	PE_ES.Week_
 			inner join Productionworkers on Productionworkers.workerID	=	PE_ES.WorkerID
 										--and skill_mastery.sawskillID=10
 										--group by 1,2

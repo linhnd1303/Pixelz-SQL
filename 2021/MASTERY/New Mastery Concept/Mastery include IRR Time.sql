@@ -105,9 +105,9 @@ with get_onlyone_worker as (
   Sawskillname,
   count(workerID) as PE_count,
   round(0.10*count(workerID),0) number_Expert,   -- linhnd: add number of expert.
-  round(0.10*count(workerID),0)*1.3 number_Master,  -- linhnd: Expert + 130%
-  round(0.10*count(workerID),0)*1.5 number_Pre_Master,
-  count(workerID)-(round(0.10*count(workerID),0)+round(0.10*count(workerID),0)*1.3+round(0.10*count(workerID),0)*1.5 number_Pre_Master)number_Bottom   --linhnd: adjust
+  round(0.10*count(workerID)*1.3,0) number_Master,  -- linhnd: Expert + 130%
+  round(0.10*count(workerID)*1.5,0) number_Pre_Master,
+  count(workerID)-(round(0.10*count(workerID),0) + round(0.10*count(workerID)*1.3,0) + round(0.10*count(workerID)*1.5,0)) number_Bottom   --linhnd: adjust
   from PE_ES
 --where sawskillid=10
   group by Month_,sawskillID,Sawskillname

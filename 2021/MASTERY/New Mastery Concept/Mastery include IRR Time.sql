@@ -1,18 +1,18 @@
 with get_onlyone_worker as (
     select
-      ImageID,
-      WorkerImageReport.SawSkillID,
-      avg(WorkerID)               workerID,
+      	ImageID,									--ImageID
+      	WorkerImageReport.SawSkillID,				--SawSkillID
+      	avg(WorkerID) workerID,						--WorkerID
       --sum(RuntimeInMiliSecond * 0.001) as IPT,
-      count(distinct WorkerID) as count_PE
+      count(distinct WorkerID) as count_PE			--Count_PE
     from WorkerImageReport
-      inner join SawSkill on SawSkill.SawSkillID=WorkerImageReport.SawSkillID
-      and SawSkillKindID=0
-    and --SawSkillID =167
-           CreatedDateTime > '2020-12-01'
-          and CreatedDateTime < '2021-08-01'
-          and WorkerImageReportStatusID = 10
-    --       and ImageID=39168366
+      					inner join SawSkill on SawSkill.SawSkillID=WorkerImageReport.SawSkillID
+      										and SawSkillKindID=0
+    										and --SawSkillID =167
+           										CreatedDateTime > '2020-12-01'
+          									and CreatedDateTime < '2021-08-01'
+          									and WorkerImageReportStatusID = 10
+    								--      and ImageID=39168366
     group by ImageID, WorkerImageReport.SawSkillID
     having count(distinct WorkerID) = 1
     

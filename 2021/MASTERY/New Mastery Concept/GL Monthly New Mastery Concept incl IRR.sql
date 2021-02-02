@@ -101,16 +101,16 @@ with get_onlyone_worker as (
     -- Trả về Rank lại PE ES mới sau khi đã Remove Outlier
     
 )
-, skill_mastery as(
+, NumRankOfExpertsPerSkill as(
   select
   Month_,
   sawskillID,
   Sawskillname,
   count(workerID) as PE_count,
-  round(0.10*count(workerID),0) number_Expert,   -- linhnd: add number of expert.
-  round(0.10*count(workerID)*1.3,0) number_Master,  -- linhnd: Expert + 130%
-  round(0.10*count(workerID)*1.5,0) number_Pre_Master,
-  count(workerID)-(round(0.10*count(workerID),0) + round(0.10*count(workerID)*1.3,0) + round(0.10*count(workerID)*1.5,0)) number_Bottom   --linhnd: adjust
+  round(0.10*count(workerID),0) number_Expert   -- linhnd: add number of expert.
+  --round(0.10*count(workerID)*1.3,0) number_Master,  -- linhnd: Expert + 130%
+  --round(0.10*count(workerID)*1.5,0) number_Pre_Master,
+  --count(workerID)-(round(0.10*count(workerID),0) + round(0.10*count(workerID)*1.3,0) + round(0.10*count(workerID)*1.5,0)) number_Bottom   --linhnd: adjust
   from PE_ES
 --where sawskillid=10
   group by Month_,sawskillID,Sawskillname
@@ -118,10 +118,35 @@ with get_onlyone_worker as (
   -- Trả về số lượng Expert,master,premaster,bottom từ bản PE ES đã remove outlier
   
   )
+  
+  , SMZ_Uppperbounds AS (
+        SELECT 
+            PE_ES.Month_,
+            PE_ES.SawSkillName,
+            PE_ES.SawSkillID,
+            number_Expert,
+            
+            round(avg(CASE WHEN rank_PEbyES <= number_Expert
+                            THEN ES END), 2)                    AS SkillExpertZone 
+           -- round(avg(CASE WHEN rank_PEbyES <= number_Expert
+           --                 THEN ES END) *  1.3, 2)             AS SkillMasteryZone,
+         --   round(avg(CASE WHEN rank_PEbyES <= number_Expert
+          --                  THEN ES END) *  1.5, 2)             AS SkillPreMasteryZone
+                         
+                            
+        FROM PE_ES
+            INNER JOIN NumRankOfExpertsPerSkill ON (NumRankOfExpertsPerSkill.Month_ = PE_ES.Month_ AND NumRankOfExpertsPerSkill.SawSkillID = PE_ES.SawSkillID)
+        GROUP BY 
+            PE_ES.Month_,
+            PE_ES.SawSkillName,
+            PE_ES.SawSkillID,
+            number_Expert
+    )      
+                                                    
 select
-	skill_mastery.Month_,
-	skill_mastery.sawskillID,
- 	skill_mastery.Sawskillname,
+	PE_ES.Month_,
+	PE_ES.sawskillID,
+ 	PE_ES.Sawskillname,
 	PE_ES.workerID,
 	"WorkerName","WorkerOfficeName",
 	Image_count,
@@ -130,20 +155,23 @@ select
   	Sum_IPT,
   	Sum_OPT,
 	ES,
-	case    when PE_ES.rank_PEbyES<=number_Expert then 'Expert'
-        	when PE_ES.rank_PEbyES>number_Expert and PE_ES.rank_PEbyES<=number_Master then 'Master'
-        	when PE_ES.rank_PEbyES>number_Master and PE_ES.rank_PEbyES<=(number_Master+number_Pre_Master) then 'Pre-Master'
-       		when PE_ES.rank_PEbyES>(number_Master+number_Pre_Master) then 'Bottom' end as matery_level,
+	case    when PE_ES.ES <=	SkillExpertZone                                       			then    'Expert'
+        	when PE_ES.ES > 	SkillExpertZone		and PE_ES.ES   <=  SkillExpertZone*1.3		then    'Master'
+        	when PE_ES.ES >	 	SkillExpertZone*1.3	and PE_ES.ES   <=  SkillExpertZone*1.5      then    'Pre-Master'
+        	when PE_ES.ES > 	SkillExpertZone*1.5                                            	then    'Bottom' 
+	end as matery_level
+        	--when PE_ES.rank_PEbyES>number_Master and PE_ES.rank_PEbyES<=(number_Master+number_Pre_Master) then 'Pre-Master'
+       		--when PE_ES.rank_PEbyES>(number_Master+number_Pre_Master) then 'Bottom' end as matery_level,
             --sum(case when PE_ES.rank_PEbyES=number_Pre_Master then PE_ES.ES end) as Pre_mastery_zone
             --PE_ES2.ES as Pre_mastery_zone
-	PE_ES.rank_PEbyES
+	--PE_ES.rank_PEbyES as Global_ES_Rank
 
-from  PE_ES inner join skill_mastery on skill_mastery.sawskillID	=	PE_ES.sawskillID
-									and skill_mastery.Month_			=	PE_ES.Month_
-			inner join Productionworkers on Productionworkers.workerID	=	PE_ES.WorkerID
+from  PE_ES inner join SMZ_Uppperbounds 	on SMZ_Uppperbounds.sawskillID		=	PE_ES.sawskillID
+												and SMZ_Uppperbounds.Month_		=	PE_ES.Month_
+			inner join Productionworkers 	on Productionworkers.workerID		=	PE_ES.WorkerID
 										--and skill_mastery.sawskillID=10
 										--group by 1,2
 
-Order by skill_mastery.Month_
+Order by PE_ES.Month_
 
 Limit 10000 offset 0 

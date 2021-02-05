@@ -19,7 +19,7 @@ with get_onlyone_worker as (
 )
   , img_allSkill as (
     select
-      datepart(Month, AssignDate)                                                                   as Month_,
+to_char(dateadd(hour, 7, AssignDate), 'YYYY') + '-' + RIGHT('W0' + CAST(DATEPART(MM, AssignDate) AS varchar(2)), 2) 	as Month_,
       AssignDate,
       get_onlyone_worker.workerID,
       ProductionWorkers.WorkerName,

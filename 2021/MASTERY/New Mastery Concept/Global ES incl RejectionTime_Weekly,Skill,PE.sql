@@ -18,7 +18,7 @@ with get_onlyone_worker as (
 )
   , img_allSkill as (
     select
-to_char(dateadd(hour, 7, AssignDate), 'YYYY') + '-' + RIGHT('W0' + CAST(DATEPART(week, AssignDate) AS varchar(2)), 2) 	as Month_,
+to_char(dateadd(hour, 7, AssignDate), 'YYYY') + '-' + RIGHT('W0' + CAST(DATEPART(week, AssignDate) AS varchar(2)), 2) 	as Week_,
        AssignDate,
       get_onlyone_worker.workerID,
       ProductionWorkers.WorkerName,
@@ -29,7 +29,7 @@ to_char(dateadd(hour, 7, AssignDate), 'YYYY') + '-' + RIGHT('W0' + CAST(DATEPART
       WorkingServicePriceInMiliseconds * 0.001                                                      as OPT,
       (WorkingTimeInMilliseconds * 0.001) / (WorkingServicePriceInMiliseconds * 0.001)              as Efficiency_score,
       row_number()
-      over ( partition by get_onlyone_worker.SawSkillID,Month_
+      over ( partition by get_onlyone_worker.SawSkillID,Week_
         order by (WorkingTimeInMilliseconds * 0.001) / (WorkingServicePriceInMiliseconds * 0.001) ) as rank_byES
     from get_onlyone_worker
       inner join ImageSawStep on get_onlyone_worker.ImageID = ImageSawStep.ImageID
@@ -45,13 +45,13 @@ to_char(dateadd(hour, 7, AssignDate), 'YYYY') + '-' + RIGHT('W0' + CAST(DATEPART
 )
   , number_outlier as (
     select
-    Month_,
+    Week_,
     Sawskillname,
       sawskillID,
       round(0.05 * count(ImageID), 0) as number_outliers,
       count(ImageID)                     Image_count
     from img_allSkill
-    group by Month_,sawskillID,Sawskillname
+    group by Week_,sawskillID,Sawskillname
 )
  , remmove_outliers as (
     select
@@ -63,13 +63,13 @@ to_char(dateadd(hour, 7, AssignDate), 'YYYY') + '-' + RIGHT('W0' + CAST(DATEPART
 --         order by Efficiency_score, IPT ) as rank_byES_2
     from img_allSkill
       inner join number_outlier on img_allSkill.sawskillid = number_outlier.SawskillID
-   								   and img_allSkill.Month_ = number_outlier.Month_
+   								   and img_allSkill.Week_ = number_outlier.Week_
                                    and img_allSkill.rank_byES > number_outliers
                                    and img_allSkill.rank_byES < Image_count - number_outliers
 )
 , PE_ES as (
     select
-  remmove_outliers.Month_,
+  remmove_outliers.Week_,
       remmove_outliers.SawSkillID,
   remmove_outliers.Sawskillname,
       workerID,
@@ -79,14 +79,14 @@ to_char(dateadd(hour, 7, AssignDate), 'YYYY') + '-' + RIGHT('W0' + CAST(DATEPART
   avg(IPT) avg_IPT,
       (sum(IPT) / Sum(OPT)) as ES,
        row_number()
-      over ( partition by remmove_outliers.SawSkillID,remmove_outliers.Month_
+      over ( partition by remmove_outliers.SawSkillID,remmove_outliers.Week_
         order by (sum(IPT) / Sum(OPT)) ) as rank_PEbyES
     from remmove_outliers
-    group by remmove_outliers.Month_,remmove_outliers.SawSkillID, remmove_outliers.Sawskillname, workerID
+    group by remmove_outliers.Week_,remmove_outliers.SawSkillID, remmove_outliers.Sawskillname, workerID
   )
 , skill_mastery as(
   select
-  Month_,
+  Week_,
   sawskillID,
   Sawskillname,
   count(workerID) as PE_count,
@@ -95,10 +95,10 @@ to_char(dateadd(hour, 7, AssignDate), 'YYYY') + '-' + RIGHT('W0' + CAST(DATEPART
   count(workerID)-(round(0.25*count(workerID),0)+round(0.5*count(workerID),0))number_Bottom
   from PE_ES
 --where sawskillid=10
-  group by Month_,sawskillID,Sawskillname
+  group by Week_,sawskillID,Sawskillname
   )
 select
-skill_mastery.Month_ as Week_,
+skill_mastery.Week_ as Week_,
 
 skill_mastery.sawskillID,
 
@@ -119,7 +119,7 @@ ES
 --sum(case when PE_ES.rank_PEbyES=number_Pre_Master then PE_ES.ES end) as Pre_mastery_zone
 --PE_ES2.ES as Pre_mastery_zone
 from  PE_ES inner join skill_mastery on skill_mastery.sawskillID=PE_ES.sawskillID
-and skill_mastery.Month_=PE_ES.Month_
+and skill_mastery.Week_=PE_ES.Week_
 --and skill_mastery.sawskillID=10
 inner join Productionworkers on Productionworkers.workerID=PE_ES.WorkerID
 Order by Week_ DESC

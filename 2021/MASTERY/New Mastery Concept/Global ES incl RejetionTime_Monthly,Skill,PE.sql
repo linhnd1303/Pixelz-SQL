@@ -123,6 +123,7 @@ Select
 Nmonth_,
 Sawskillid,
 sawskillname,
+workerID,
 "WorkerName",
 workerofficename,
 Sum(image_count) as totalimage,
@@ -134,5 +135,6 @@ Group by
 Nmonth_,
 Sawskillid,
 sawskillname,
+workerID,
 "WorkerName",
 workerofficename

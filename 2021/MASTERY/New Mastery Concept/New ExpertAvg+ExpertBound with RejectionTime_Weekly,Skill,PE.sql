@@ -124,7 +124,7 @@ NumRankOfExpertsPerSkill as(
       NumRankOfExperts
 --      a.rank_PEbyES
 
-Order by  month_ DESC, eff_score DESC
+Order by  Week_ DESC, eff_score DESC
 --Limit 100 offset 0
 --)
 

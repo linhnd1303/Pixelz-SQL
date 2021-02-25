@@ -108,7 +108,7 @@ PE_ES.workerID,
 "WorkerName",
 "WorkerOfficeName",
 Image_count,
-avg_IPT,
+--avg_IPT,
 PE_ES.total_IPT,
 PE_ES.total_OPT,
 

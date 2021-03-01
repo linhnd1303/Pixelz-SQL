@@ -9,8 +9,8 @@ with get_onlyone_worker as (
       inner join SawSkill on SawSkill.SawSkillID=WorkerImageReport.SawSkillID
       and SawSkillKindID=0
     and --SawSkillID =167
-           CreatedDateTime >= '2020-12-06'
-          and CreatedDateTime <= '2021-06-09'
+           CreatedDateTime >= '2020-11-01'
+          and CreatedDateTime <= '2021-12-30'
           and WorkerImageReportStatusID = 10
     --       and ImageID=39168366
     group by ImageID, WorkerImageReport.SawSkillID
@@ -18,7 +18,7 @@ with get_onlyone_worker as (
 )
   , img_allSkill as (
     select
-to_char(dateadd(hour, 7, AssignDate), 'YYYY') + '-' + RIGHT('W0' + CAST(DATEPART(week, AssignDate) AS varchar(2)), 2) 	as Week_,
+to_char(dateadd(hour, 7, AssignDate), 'YYYY') + '-' + RIGHT('W0' + CAST(DATEPART(MM, AssignDate) AS varchar(2)), 2) 	as Week_,
        AssignDate,
       get_onlyone_worker.workerID,
       ProductionWorkers.WorkerName,
@@ -36,13 +36,13 @@ to_char(dateadd(hour, 7, AssignDate), 'YYYY') + '-' + RIGHT('W0' + CAST(DATEPART
                                  --         and ImageSawStepID>530000000--4019710
                                  and get_onlyone_worker.SawSkillID = ImageSawStep.SawskillID
                                  and get_onlyone_worker.workerID = ImageSawStep.ProductionWorkerID
-                                 and AssignDate >= '2020-12-06'
-                                 and AssignDate <= '2021-06-09'
+                                 and AssignDate >= '2020-11-01'
+                                 and AssignDate <= '2021-12-30'
                                  and WorkingTimeInMilliseconds > 0
                                  and WorkingServicePriceInMiliseconds > 0
       inner join ProductionWorkers on get_onlyone_worker.workerID = ProductionWorkers.workerID
     							 and ProductionWorkers.WorkerName not like '%bot%'
-    							and ProductionWorkers.WorkerName not like '%free%'
+    							and ProductionWorkers.WorkerName not like '%Free%'
 )
   , number_outlier as (
     select
@@ -98,7 +98,8 @@ to_char(dateadd(hour, 7, AssignDate), 'YYYY') + '-' + RIGHT('W0' + CAST(DATEPART
 --where sawskillid=10
   group by Week_,sawskillID,Sawskillname
   )
-select
+,Tmp as(
+ select
 skill_mastery.Week_ as Week_,
 
 skill_mastery.sawskillID,
@@ -109,19 +110,32 @@ PE_ES.workerID,
 "WorkerName",
 "WorkerOfficeName",
 Image_count,
---avg_IPT,
+avg_IPT,
 PE_ES.total_IPT,
 PE_ES.total_OPT,
 
 ES
---case when PE_ES.rank_PEbyES<=number_Master then 'Master'
---when PE_ES.rank_PEbyES>number_Master and PE_ES.rank_PEbyES<=(number_Master+number_Pre_Master) then 'Pre-Master'
---when PE_ES.rank_PEbyES>(number_Master+number_Pre_Master) then 'Bottom' end as matery_level
---sum(case when PE_ES.rank_PEbyES=number_Pre_Master then PE_ES.ES end) as Pre_mastery_zone
---PE_ES2.ES as Pre_mastery_zone
+
 from  PE_ES inner join skill_mastery on skill_mastery.sawskillID=PE_ES.sawskillID
 and skill_mastery.Week_=PE_ES.Week_
---and skill_mastery.sawskillID=10
 inner join Productionworkers on Productionworkers.workerID=PE_ES.WorkerID
-Order by Week_ DESC
---group by 1,2
+)
+Select 
+Week_,
+Sawskillid,
+sawskillname,
+workerID,
+"WorkerName",
+workerofficename,
+Sum(image_count) as totalimage,
+round(Sum(Total_ipt)/3600,2) as "TotalIPT(hour)",
+round(Sum(Total_opt)/3600,2) as "TotalOPT(hour)"
+
+From tmp
+Group by 
+Week_,
+Sawskillid,
+sawskillname,
+workerID,
+"WorkerName",
+workerofficename

@@ -43,6 +43,7 @@ to_char(dateadd(hour, 7, AssignDate), 'YYYY') + '-' + RIGHT('W0' + CAST(DATEPART
                                  and WorkingServicePriceInMiliseconds > 0
       inner join ProductionWorkers on get_onlyone_worker.workerID = ProductionWorkers.workerID
     							 and ProductionWorkers.WorkerName not like '%bot%'
+    							 and ProductionWorkers.WorkerName not like '%Free%'
 )
   , number_outlier as (
     select

@@ -18,7 +18,7 @@ with _ as (
     select
 --            dateadd(hour, -7, '2019-07-28 06:15:00') as start_,
 --            dateadd(hour, -7, '2019-09-01 06:15:00') as end_,
-           dateadd(month, -3, date_) as start_,
+           dateadd(month, -4, date_) as start_,
            dateadd(month,  1, date_) as end_,
            7*60 - mins_ as shifted_
     from (select dateadd(hour, -7, dateadd(minute, mins_, dateadd(day, 25, date_trunc('month',
@@ -69,7 +69,8 @@ with _ as (
       UNION ALL SELECT 1312 , '5_Browser_'
       UNION ALL SELECT -1   , '6_IDLE'
       UNION ALL SELECT 514  , '7_Skype_'
-      UNION ALL SELECT 10   , '1__PostProcessingTime'
+      UNION ALL SELECT 10   , '1__FullAutoPostProcessingTime'
+  	  UNION ALL SELECT 14   , '1__SemiAutoPostProcessingTime'
       UNION ALL SELECT 2    , '9_TrainingMeetingTime'
       UNION ALL SELECT 3    , '9_TrainingMeetingTime'
       UNION ALL SELECT 4    , '9_TrainingMeetingTime'
@@ -173,8 +174,8 @@ with _ as (
     from (SELECT * FROM ActivityLog
           UNION ALL SELECT * FROM logout_timing
           UNION ALL SELECT 1091 as MappedTypeID, WorkerID, timing, time_at FROM have_meal_tab
-          UNION ALL SELECT 7116 as MappedTypeID, WorkerID, timing, time_at FROM ActivityLog where MappedTypeID in (110, 10)
-          UNION ALL SELECT 7117 as MappedTypeID, WorkerID, timing, time_at FROM ActivityLog where MappedTypeID in (110, 10, 5)
+          UNION ALL SELECT 7116 as MappedTypeID, WorkerID, timing, time_at FROM ActivityLog where MappedTypeID in (110, 10, 14)
+          UNION ALL SELECT 7117 as MappedTypeID, WorkerID, timing, time_at FROM ActivityLog where MappedTypeID in (110, 10, 5, 14)
          ) __,_
 ), timing AS (
     select
@@ -279,4 +280,3 @@ WHERE filter_worker.PEGroupID in (4)
       and ActivityType.MappedTypeID in (7117) --linhnd: add filter by Acitivty 
 ORDER BY date_ desc, timing.shiftID desc, team.TeamName, filter_worker.WorkerID, isNormalShift desc,  ActivityType.TypeName
 limit 10000 offset 0
- 
